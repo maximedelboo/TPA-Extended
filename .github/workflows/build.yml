@@ -59,7 +59,7 @@ jobs:
           laz: ${{ env.LAZ_VER }}
           fpc: ${{ env.FPC_VER }}
           
-      - name: Build TPA Extended
+      - name: Build Library tpaex
         run: |
           lazbuild --build-mode=${{ matrix.config.build-mode }} tpaex.lpi
 
