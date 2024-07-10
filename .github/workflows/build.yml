@@ -51,7 +51,7 @@ jobs:
             binary: libtpaex64.dylib.aarch64
          
     steps:
-      - uses: actions/checkout@v3.5.3
+      - uses: actions/checkout@v4
       
       - name: Install Lazarus
         uses: ollydev/setup-lazarus-fpcup@v3.3
@@ -64,7 +64,7 @@ jobs:
           lazbuild --build-mode=${{ matrix.config.build-mode }} tpaex.lpi
 
       - name: Upload Binary 
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.config.binary }}
           path: ${{ matrix.config.binary }}
