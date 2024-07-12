@@ -114,8 +114,14 @@ function ParamArray(arr:array of Pointer): TParamArray;
 
 function Box(const x1,y1,x2,y2:Integer): TBox; inline;
 function Point(const x,y:Integer): TPoint; inline;
+function DistanceBetween(a, b: TPoint): Double;
+
+function TPABounds(const TPA: TPointArray): TBox;
+
+procedure TPAReverse(var TPA: TPointArray);
 
 operator = (left, right: TPoint): Boolean;
+operator + (left, right: TPoint): TPoint;
 operator = (left, right: TBox): Boolean;
 
 //-----------------------------------------------------------------------
@@ -174,6 +180,53 @@ begin
   Result.Y := Y;
 end;  
 
+function DistanceBetween(a, b: TPoint): Double;
+begin
+  Result := Hypot(a.X-b.X, a.Y-b.Y);
+end;
+
+function TPABounds(const TPA: TPointArray): TBox;
+  var
+    I,L : Int32;
+  begin;
+    FillChar(result,sizeof(TBox),0);
+    L := High(TPA);
+    if (l < 0) then Exit;
+    Result.x1 := TPA[0].x;
+    Result.y1 := TPA[0].y;
+    Result.x2 := TPA[0].x;
+    Result.y2 := TPA[0].y;
+    for I:= 1 to L do
+    begin;
+      if TPA[i].x > Result.x2 then
+        Result.x2 := TPA[i].x
+      else if TPA[i].x < Result.x1 then
+        Result.x1 := TPA[i].x;
+      if TPA[i].y > Result.y2 then
+        Result.y2 := TPA[i].y
+      else if TPA[i].y < Result.y1 then
+        Result.y1 := TPA[i].y;
+    end;
+  end;
+
+procedure TPAReverse(var TPA: TPointArray);
+var
+  tmp: TPoint;
+  lo, hi: PPoint;
+begin
+  lo := @TPA[0];
+  hi := @TPA[High(TPA)];
+  while (PtrUInt(lo)<PtrUInt(hi)) do
+  begin
+    tmp := hi^;
+    hi^ := lo^;
+    lo^ := tmp;
+    dec(hi);
+    inc(lo);
+  end;
+end;
+
+
 
 operator = (Left, Right: TPoint): Boolean;
 begin
@@ -186,5 +239,10 @@ begin
             (Left.x2 = Right.x2) and (Left.y2 = Right.y2);
 end;
 
+operator + (left, right: TPoint): TPoint;
+begin
+  Result.X := left.X + right.X;
+  Result.Y := left.Y + right.Y;
+end;
 
 end.

@@ -14,9 +14,9 @@
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
     </General>
-     <BuildModes Count="6">
-      <Item1 Name="WIN64" Default="True"/>
-      <Item2 Name="WIN32">
+    <BuildModes>
+      <Item Name="WIN64" Default="True"/>
+      <Item Name="WIN32">
         <CompilerOptions>
           <Version Value="11"/>
           <PathDelim Value="\"/>
@@ -52,8 +52,8 @@
             </Options>
           </Linking>
         </CompilerOptions>
-      </Item2>
-      <Item3 Name="LINUX64">
+      </Item>
+      <Item Name="LINUX64">
         <CompilerOptions>
           <Version Value="11"/>
           <PathDelim Value="\"/>
@@ -88,8 +88,8 @@
             </Options>
           </Linking>
         </CompilerOptions>
-      </Item3>
-      <Item4 Name="LINUX-AARCH64">
+      </Item>
+      <Item Name="LINUX-AARCH64">
         <CompilerOptions>
           <Version Value="11"/>
           <PathDelim Value="\"/>
@@ -124,8 +124,8 @@
             </Options>
           </Linking>
         </CompilerOptions>
-      </Item4>
-      <Item5 Name="MACOS">
+      </Item>
+      <Item Name="MACOS">
         <CompilerOptions>
           <Version Value="11"/>
           <PathDelim Value="\"/>
@@ -160,8 +160,8 @@
             </Options>
           </Linking>
         </CompilerOptions>
-      </Item5>
-      <Item6 Name="MACOS-AARCH64">
+      </Item>
+      <Item Name="MACOS-AARCH64">
         <CompilerOptions>
           <Version Value="11"/>
           <PathDelim Value="\"/>
@@ -196,7 +196,7 @@
             </Options>
           </Linking>
         </CompilerOptions>
-      </Item6>
+      </Item>
       <SharedMatrixOptions Count="1">
         <Item1 ID="223070317870" Type="IDEMacro" MacroName="LCLWidgetType" Value="cocoa"/>
       </SharedMatrixOptions>
