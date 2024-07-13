@@ -349,76 +349,57 @@ end;
 function AStarTPA(tpa: TPointArray; start, goal: TPoint; out totalDist: Double; diagonalTravel: Boolean = True; maxDistanceMultiplier: Int32 = 5): TPointArray;
   const OFFSETS: array[0..7] of TPoint = ((X:0; Y:-1),(X:-1; Y:0),(X:1; Y:0),(X:0; Y:1),(X:1; Y:-1),(X:-1; Y:1),(X:1; Y:1),(X:-1; Y:-1));
   type TNode = record Point: TPoint; Distance: Double; Priority: Double; end;
-  var queue: record Items: array of TNode; Count, Capacity: Int32; end;
+  var queue: array of TNode;
   var parents: T2DPointArray;
-
-  procedure _Push(item: TNode);
-  var
-    i, parent: Int32;
-  begin
-    if queue.Count = queue.Capacity then
-    begin
-      queue.Capacity += 16;
-      SetLength(queue.Items, queue.Capacity);
-    end;
-
-    queue.Items[queue.Count] := item;
-    i := queue.Count;
-    Inc(queue.Count);
-
-    // Min-heap insertion
-    while (i > 0) and (queue.Items[i].Priority < queue.Items[(i - 1) div 2].Priority) do
-    begin
-      parent := (i - 1) div 2;
-      queue.Items[i] := queue.Items[parent];
-      i := parent;
-    end;
-    queue.Items[i] := item;
-  end;
 
   function _Pop(): TNode;
   var
-    i, child: Int32;
-    lastItem: TNode;
+    i: Int32 = 0;
+    child: Int32 = 1;
+    next: Int32 = 2;
+    hi: Int32;
   begin
-    Result := queue.Items[0];
-    if Length(queue.Items) = 1 then Exit;
+    Result := queue[0];
 
-    Dec(queue.Count);
-    lastItem := queue.Items[queue.Count];
+    hi := High(queue);
+    if hi < 1 then Exit;
 
-    // Min-heap deletion
     i := 0;
-    while (i * 2 + 1 < queue.Count) do
+    child := 1;
+    next := 2;
+    // Min-heap deletion. I don't really understand this loop. Some kind of weird sorting
+    while (child < hi) do
     begin
-      child := i * 2 + 1;
-      if (child + 1 < queue.Count) and (queue.Items[child + 1].Priority < queue.Items[child].Priority) then
-        Inc(child);
-      if lastItem.Priority <= queue.Items[child].Priority then
-        Break;
-      queue.Items[i] := queue.Items[child];
+      if queue[hi].Priority <= queue[child].Priority then Break;
+      if (next < hi) and (queue[next].Priority < queue[child].Priority) then child := next;
+
+      queue[i] := queue[child];
       i := child;
+
+      child := child * 2 + 1;
+      next := child + 1;
     end;
 
-    queue.Items[i] := lastItem;
+    queue[i] := queue[hi];
+    Delete(queue, hi, 1);
   end;
 
   function _BuildPath(): TPointArray;
   var
     tmp: TPoint;
-    len: Int32;
+    len: Int32 = 0;
   begin
     tmp := goal;
-    len := 0;
 
     while tmp <> start do
     begin
-      len += 1;
-      SetLength(Result, len);
+      SetLength(Result, Inc(len));
       Result[len-1] := tmp;
       tmp := parents[tmp.Y, tmp.X];
     end;
 
+    SetLength(Result, Inc(len));
+    Result[len-1] := tmp;
     TPAReverse(Result);
   end;
 
@@ -428,7 +409,7 @@ var
   matrix, visited: array of TBoolArray;
   path: TPointArray;
   p: TPoint;
-  hi, i: Int32;
+  idx, i, hi: Int32;
   dist: Double;
 begin
   b := TPABounds(tpa);
@@ -441,11 +422,6 @@ begin
   SetLength(visited, b.Y2+1, b.X2+1);
   SetLength(parents, b.Y2+1, b.X2+1);
 
-  queue.Count := 0;
-  queue.Capacity := 16; // initial capacity
-
-  SetLength(queue.Items, 16);
-
   dist := DistanceBetween(start, goal);
 
   current.Point := start;
@@ -453,14 +429,18 @@ begin
   current.Priority := dist;
 
   visited[start.Y, start.X] := True;
-  parents[start.Y, start.X] := start;
-  _Push(current);
+
+  idx := Length(queue);
+  SetLength(queue, idx + 1);
+  queue[idx] := current;
 
   dist := maxDistanceMultiplier * dist;
+  if diagonalTravel then hi := 7 else hi := 3;
 
-  while queue.Count > 0 do
+  while Length(queue) > 0 do
   begin
     current := _Pop();
+    //WriteLn('[',current.Point.X, ',', current.Point.Y, ']');
 
     if current.Point = goal then
     begin
@@ -469,29 +449,27 @@ begin
     end;
 
     if current.Distance >= dist then Exit;
-    if diagonalTravel then hi := 7 else hi := 3;
 
     for i := 0 to hi do
     begin
       next.Point := current.Point + OFFSETS[i];
 
-      try
-        if visited[next.Point.Y, next.Point.X] then Continue;
-      except
-        //try except seems to be faster than a bounds check lol.
-        Continue;
-      end;
+      //try except seems to be faster than a bounds check lol.
+      try if visited[next.Point.Y, next.Point.X] then Continue; except Continue; end;
 
       if not matrix[next.Point.Y, next.Point.X] then Continue;
 
-      if i <= 3 then next.Distance := Current.Distance + 1
+      if i < 4 then next.Distance := Current.Distance + 1
       else           next.Distance := Current.Distance + Sqrt(2);
 
       next.Priority := next.Distance + DistanceBetween(next.Point, goal);
 
       visited[next.Point.Y, next.Point.X] := True;
       parents[next.Point.Y, next.Point.X] := current.Point;
-      _Push(next);
+
+      idx := Length(queue);
+      SetLength(queue, idx + 1);
+      queue[idx] := next;
     end;
   end;
 
