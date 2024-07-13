@@ -393,12 +393,14 @@ function AStarTPA(tpa: TPointArray; start, goal: TPoint; out totalDist: Double; 
 
     while tmp <> start do
     begin
-      SetLength(Result, Inc(len));
+      Inc(len);
+      SetLength(Result, len);
       Result[len-1] := tmp;
       tmp := parents[tmp.Y, tmp.X];
     end;
 
-    SetLength(Result, Inc(len));
+    Inc(len);
+    SetLength(Result, len);
     Result[len-1] := tmp;
     TPAReverse(Result);
   end;
