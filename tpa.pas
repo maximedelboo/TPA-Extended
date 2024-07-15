@@ -347,6 +347,8 @@ begin
 end;
 
 function AStarTPA(tpa: TPointArray; start, goal: TPoint; out totalDist: Double; diagonalTravel: Boolean = True; maxDistanceMultiplier: Int32 = 5): TPointArray;
+  const PAD: TPoint = (X:1;Y:1);
+  const UNPAD: TPoint = (X:-1;Y:-1);
   const OFFSETS: array[0..7] of TPoint = ((X:0; Y:-1),(X:-1; Y:0),(X:1; Y:0),(X:0; Y:1),(X:1; Y:-1),(X:-1; Y:1),(X:1; Y:1),(X:-1; Y:-1));
   type TNode = record Point: TPoint; Distance: Double; Priority: Double; end;
   var queue: array of TNode;
@@ -395,34 +397,38 @@ function AStarTPA(tpa: TPointArray; start, goal: TPoint; out totalDist: Double; 
     begin
       Inc(len);
       SetLength(Result, len);
-      Result[len-1] := tmp;
+      Result[len-1] := tmp + UNPAD;
       tmp := parents[tmp.Y, tmp.X];
     end;
 
     Inc(len);
     SetLength(Result, len);
-    Result[len-1] := tmp;
+    Result[len-1] := tmp + UNPAD;
     TPAReverse(Result);
   end;
 
 var
-  current, next: TNode;
   b: TBox;
+  current, next: TNode;
   matrix, visited: array of TBoolArray;
-  path: TPointArray;
-  p: TPoint;
-  idx, i, hi: Int32;
+  idx, i, hi, size: Int32;
   dist: Double;
 begin
   b := TPABounds(tpa);
-  SetLength(matrix, b.Y2+1, b.X2+1);
+  SetLength(matrix, b.Y2+2, b.X2+2);
 
-  for p in tpa do matrix[p.Y, p.X] := True;
+  //we pad all points so we don't have to bother with bounds checking
+  start := start + PAD;
+  goal  := goal + PAD;
+
+  for i := 0 to High(tpa) do
+    matrix[tpa[i].Y+1, tpa[i].X+1] := True;
+
   if not matrix[start.Y, start.X] then Exit;
   if not matrix[goal.Y, goal.X] then Exit;
 
-  SetLength(visited, b.Y2+1, b.X2+1);
-  SetLength(parents, b.Y2+1, b.X2+1);
+  SetLength(visited, b.Y2+2, b.X2+2);
+  SetLength(parents, b.Y2+2, b.X2+2);
 
   dist := DistanceBetween(start, goal);
 
@@ -439,10 +445,12 @@ begin
   dist := maxDistanceMultiplier * dist;
   if diagonalTravel then hi := 7 else hi := 3;
 
-  while Length(queue) > 0 do
+  size := 1;
+
+  while size > 0 do
   begin
     current := _Pop();
-    //WriteLn('[',current.Point.X, ',', current.Point.Y, ']');
+    Dec(size);
 
     if current.Point = goal then
     begin
@@ -456,9 +464,7 @@ begin
     begin
       next.Point := current.Point + OFFSETS[i];
 
-      //try except seems to be faster than a bounds check lol.
-      try if visited[next.Point.Y, next.Point.X] then Continue; except Continue; end;
-
+      if visited[next.Point.Y, next.Point.X] then Continue;
       if not matrix[next.Point.Y, next.Point.X] then Continue;
 
       if i < 4 then next.Distance := Current.Distance + 1
@@ -472,6 +478,7 @@ begin
       idx := Length(queue);
       SetLength(queue, idx + 1);
       queue[idx] := next;
+      Inc(size);
     end;
   end;
 

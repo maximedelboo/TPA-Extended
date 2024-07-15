@@ -18,9 +18,9 @@
         <IsPartOfProject Value="True"/>
         <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
-        <TopLine Value="355"/>
-        <CursorPos X="14" Y="402"/>
-        <FoldState Value=" TL108 T3R0e1 pkXlY0{M211 Pi7kO2 T0rH43v"/>
+        <TopLine Value="389"/>
+        <CursorPos X="27" Y="406"/>
+        <FoldState Value=" TL108 T3R0e1 pkXlY0{M211 Pi7jb26"/>
         <UsageCount Value="34"/>
         <Loaded Value="True"/>
       </Unit>
@@ -107,23 +107,7 @@
         <UsageCount Value="10"/>
       </Unit>
     </Units>
-    <JumpHistory HistoryIndex="29">
-      <Position>
-        <Filename Value="tpa.pas"/>
-        <Caret Line="453" Column="18" TopLine="441"/>
-      </Position>
-      <Position>
-        <Filename Value="tpa.pas"/>
-        <Caret Line="455" Column="16" TopLine="444"/>
-      </Position>
-      <Position>
-        <Filename Value="tpa.pas"/>
-        <Caret Line="456" Column="20" TopLine="444"/>
-      </Position>
-      <Position>
-        <Filename Value="tpa.pas"/>
-        <Caret Line="457" Column="25" TopLine="445"/>
-      </Position>
+    <JumpHistory HistoryIndex="28">
       <Position>
         <Filename Value="tpa.pas"/>
         <Caret Line="455" Column="78" TopLine="444"/>
@@ -227,6 +211,18 @@
       <Position>
         <Filename Value="tpa.pas"/>
         <Caret Line="401" Column="38" TopLine="387"/>
+      </Position>
+      <Position>
+        <Filename Value="tpa.pas"/>
+        <Caret Line="419" Column="7" TopLine="415"/>
+      </Position>
+      <Position>
+        <Filename Value="tpa.pas"/>
+        <Caret Line="465" Column="22" TopLine="448"/>
+      </Position>
+      <Position>
+        <Filename Value="tpa.pas"/>
+        <Caret Line="418" Column="40" TopLine="355"/>
       </Position>
     </JumpHistory>
     <RunParams>
