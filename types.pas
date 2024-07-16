@@ -116,7 +116,7 @@ function Box(const x1,y1,x2,y2:Integer): TBox; inline;
 function Point(const x,y:Integer): TPoint; inline;
 function DistanceBetween(a, b: TPoint): Double;
 
-function TPABounds(const TPA: TPointArray): TBox;
+function GetTPABounds(const TPA: TPointArray): TBox;
 
 procedure TPAReverse(var TPA: TPointArray);
 
@@ -185,7 +185,7 @@ begin
   Result := Hypot(a.X-b.X, a.Y-b.Y);
 end;
 
-function TPABounds(const TPA: TPointArray): TBox;
+function GetTPABounds(const TPA: TPointArray): TBox;
   var
     I,L : Int32;
   begin;

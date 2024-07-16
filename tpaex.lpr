@@ -27,9 +27,14 @@ begin
   P2DBoolArray(Result)^ := TPAMatrix(PPointArray(Params^[0])^);
 end;
 
+procedure Lape_AStarTPAEx(const Params: PParamArray; const Result: Pointer); cdecl;
+begin
+  PPointArray(Result)^ := AStarTPAEx(PPointArray(Params^[0])^, P2DFloatArray(Params^[1])^, PPoint(Params^[2])^, PPoint(Params^[3])^, PBoolean(Params^[4])^);
+end;
+
 procedure Lape_AStarTPA(const Params: PParamArray; const Result: Pointer); cdecl;
 begin
-  PPointArray(Result)^ := AStarTPA(PPointArray(Params^[0])^, PPoint(Params^[1])^, PPoint(Params^[2])^, PDouble(Params^[3])^, PBoolean(Params^[4])^, PInt32(Params^[5])^);
+  PPointArray(Result)^ := AStarTPA(PPointArray(Params^[0])^, PPoint(Params^[1])^, PPoint(Params^[2])^, PBoolean(Params^[3])^);
 end;
 
 begin
@@ -37,5 +42,6 @@ begin
   addGlobalFunc('function NRClusterTPA(const TPA: TPointArray; dist: Double): T2DPointArray; native;', @Lape_NRClusterTPA);
   addGlobalFunc('function SkeletonTPA(tpa: TPointArray; fMin, fMax: Int32): TPointArray; native;', @Lape_SkeletonTPA);
   addGlobalFunc('function TPAMatrix(tpa: TPointArray): T2DBoolArray; native;', @Lape_TPAMatrix);
-  addGlobalFunc('function AStarTPA(tpa: TPointArray; start, goal: TPoint; out totalDist: Double; diagonalTravel: Boolean = True; maxDistanceMultiplier: Int32 = 5): TPointArray; native;', @Lape_AStarTPA);
+  addGlobalFunc('function AStarTPAEx(tpa: TPointArray; out paths: TSingleMatrix; start, goal: TPoint; diagonalTravel: Boolean): TPointArray; native;', @Lape_AStarTPAEx);
+  addGlobalFunc('function AStarTPA(tpa: TPointArray; start, goal: TPoint; diagonalTravel: Boolean): TPointArray; native;', @Lape_AStarTPA);
 end.

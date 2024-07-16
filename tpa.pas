@@ -18,7 +18,23 @@ function NRSplitTPA(const arr: TPointArray; dist: Double): T2DPointArray;
 function NRClusterTPA(const tpa: TPointArray; dist: Double): T2DPointArray;
 function SkeletonTPA(tpa: TPointArray; fMin, fMax: Int32): TPointArray;
 function TPAMatrix(tpa: TPointArray): T2DBoolArray;
-function AStarTPA(tpa: TPointArray; start, goal: TPoint; out totalDist: Double; diagonalTravel: Boolean = True; maxDistanceMultiplier: Int32 = 5): TPointArray;
+
+type TNode = record Pt: TPoint; Weight: Int32; end;
+type TQueue = array of TNode;
+
+procedure _SiftDown(var queue: TQueue; startpos, pos: Int32);
+procedure _SiftUp(var queue: TQueue; pos: Int32);
+
+type TAStarNodeData = record Parent: TPoint; Open, Closed: Boolean; ScoreA, ScoreB: Int32; end;
+type TAStarData = array of array of TAStarNodeData;
+
+procedure _Push(var queue: TQueue; node: TNode; var data: TAStarData; var size: Int32);
+function _Pop(var queue: TQueue; var data: TAStarData; var size: Int32): TNode;
+function _BuildPath(start, goal: TPoint; data: TAStarData): TPointArray;
+
+function AStarTPAEx(tpa: TPointArray; out paths: T2DFloatArray; start, goal: TPoint; diagonalTravel: Boolean): TPointArray;
+
+function AStarTPA(tpa: TPointArray; start, goal: TPoint; diagonalTravel: Boolean): TPointArray; overload;
 
 implementation
 
@@ -258,7 +274,7 @@ begin
   if (h <= 0) then
     Exit;
 
-  B := TPABounds(tpa);
+  B := GetTPABounds(tpa);
   B.X1 -= 2;
   B.Y1 -= 2;
 
@@ -341,147 +357,253 @@ var
   b: TBox;
   p: TPoint;
 begin
-  b := TPABounds(tpa);
+  b := GetTPABounds(tpa);
   SetLength(Result, b.Y2+1, b.X2+1);
   for p in tpa do Result[p.Y, p.X] := True;
 end;
 
-function AStarTPA(tpa: TPointArray; start, goal: TPoint; out totalDist: Double; diagonalTravel: Boolean = True; maxDistanceMultiplier: Int32 = 5): TPointArray;
-  const PAD: TPoint = (X:1;Y:1);
-  const UNPAD: TPoint = (X:-1;Y:-1);
-  const OFFSETS: array[0..7] of TPoint = ((X:0; Y:-1),(X:-1; Y:0),(X:1; Y:0),(X:0; Y:1),(X:1; Y:-1),(X:-1; Y:1),(X:1; Y:1),(X:-1; Y:-1));
-  type TNode = record Point: TPoint; Distance: Double; Priority: Double; end;
-  var queue: array of TNode;
-  var parents: T2DPointArray;
 
-  function _Pop(): TNode;
-  var
-    i: Int32 = 0;
-    child: Int32 = 1;
-    next: Int32 = 2;
-    hi: Int32;
+//AStar
+procedure _SiftDown(var queue: TQueue; startpos, pos: Int32);
+var
+  parentpos: Int32;
+  parent,newitem: TNode;
+begin
+  newitem := queue[pos];
+  while pos > startpos do
+  begin
+    parentpos := (pos - 1) shr 1;
+    parent := queue[parentpos];
+    if (newitem.Weight < parent.Weight) then
+    begin
+      queue[pos] := parent;
+      pos := parentpos;
+      continue;
+    end;
+    Break;
+  end;
+  queue[pos] := newitem;
+end;
+
+procedure _SiftUp(var queue: TQueue; pos: Int32);
+var
+  endpos, startpos, childpos, rightpos: Int32;
+  newitem: TNode;
+begin
+  endpos := Length(queue);
+  startpos := pos;
+  newitem := queue[pos];
+  // Move the smaller child up until hitting a leaf.
+  childpos := 2 * pos + 1;    // leftmost child
+  while (childpos < endpos) do
+  begin
+    // Set childpos to index of smaller child.
+    rightpos := childpos + 1;
+    if (rightpos < endpos) and (queue[childpos].Weight >= queue[rightpos].Weight) then
+      childpos := rightpos;
+    // Move the smaller child up.
+    queue[pos] := queue[childpos];
+    pos := childpos;
+    childpos := 2 * pos + 1;
+  end;
+  // This (`pos`) node/leaf is empty. So we can place "newitem" in here, then
+  // push it up to its final place (by sifting its parents down).
+  queue[pos] := newitem;
+  _SiftDown(queue, startpos, pos);
+end;
+
+procedure _Push(var queue: TQueue; node: TNode; var data: TAStarData; var size: Int32);
+var
+  i: Int32;
+begin
+  i := Length(queue);
+  SetLength(queue, i + 1);
+  queue[i] := node;
+  _SiftDown(queue, 0, i);
+  data[node.Pt.Y, node.Pt.X].Open := True;
+  Inc(size);
+end;
+
+function _Pop(var queue: TQueue; var data: TAStarData; var size: Int32): TNode;
+var
+  node: TNode;
+begin
+  node := queue[High(queue)];
+  SetLength(queue, High(queue));
+
+  if Length(queue) > 0 then
   begin
     Result := queue[0];
+    queue[0] := node;
+    _SiftUp(queue, 0);
+  end
+  else
+    Result := node;
 
-    hi := High(queue);
-    if hi < 1 then Exit;
+  data[Result.Pt.Y, Result.Pt.X].Open := False;
+  data[Result.Pt.Y, Result.Pt.X].Closed := True;
+  Dec(size);
+end;
 
-    i := 0;
-    child := 1;
-    next := 2;
-    // Min-heap deletion. I don't really understand this loop. Some kind of weird sorting
-    while (child < hi) do
-    begin
-      if queue[hi].Priority <= queue[child].Priority then Break;
-      if (next < hi) and (queue[next].Priority < queue[child].Priority) then child := next;
+function _BuildPath(start, goal: TPoint; data: TAStarData): TPointArray;
+var
+  tmp: TPoint;
+  len: Int32 = 0;
+begin
+  tmp := goal;
 
-      queue[i] := queue[child];
-      i := child;
-
-      child := child * 2 + 1;
-      next := child + 1;
-    end;
-
-    queue[i] := queue[hi];
-    Delete(queue, hi, 1);
-  end;
-
-  function _BuildPath(): TPointArray;
-  var
-    tmp: TPoint;
-    len: Int32 = 0;
+  while tmp <> start do
   begin
-    tmp := goal;
-
-    while tmp <> start do
-    begin
-      Inc(len);
-      SetLength(Result, len);
-      Result[len-1] := tmp + UNPAD;
-      tmp := parents[tmp.Y, tmp.X];
-    end;
-
     Inc(len);
     SetLength(Result, len);
-    Result[len-1] := tmp + UNPAD;
-    TPAReverse(Result);
+    Result[len-1] := tmp;
+    tmp := data[tmp.Y, tmp.X].Parent;
   end;
 
+  Inc(len);
+  SetLength(Result, len);
+  Result[len-1] := tmp;
+  TPAReverse(Result);
+end;
+
+
+function AStarTPAEx(tpa: TPointArray; out paths: T2DFloatArray; start, goal: TPoint; diagonalTravel: Boolean): TPointArray;
+const
+  OFFSETS: array[0..7] of TPoint = ((X:0; Y:-1),(X:-1; Y:0),(X:1; Y:0),(X:0; Y:1),(X:1; Y:-1),(X:-1; Y:1),(X:1; Y:1),(X:-1; Y:-1));
 var
   b: TBox;
-  current, next: TNode;
-  matrix, visited: array of TBoolArray;
-  idx, i, hi, size: Int32;
-  dist: Double;
+  queue: TQueue;
+  data: TAStarData;
+  matrix: T2DBoolArray;
+  score, i, hi, size: Int32;
+  node: TNode;
+  q, p: TPoint;
 begin
-  b := TPABounds(tpa);
-  SetLength(matrix, b.Y2+2, b.X2+2);
+  b := GetTPABounds(tpa);
+  if not b.Contains(start) then Exit;
+  if not b.Contains(goal) then Exit;
 
-  //we pad all points so we don't have to bother with bounds checking
-  start := start + PAD;
-  goal  := goal + PAD;
+  SetLength(matrix, b.Y2+1, b.X2+1);
 
-  for i := 0 to High(tpa) do
-    matrix[tpa[i].Y+1, tpa[i].X+1] := True;
+  for p in tpa do matrix[p.Y, p.X] := True;
 
   if not matrix[start.Y, start.X] then Exit;
   if not matrix[goal.Y, goal.X] then Exit;
 
-  SetLength(visited, b.Y2+2, b.X2+2);
-  SetLength(parents, b.Y2+2, b.X2+2);
+  paths := [];
+  SetLength(paths, b.Y2+1, b.X2+1);
+  SetLength(data, b.Y2+1, b.X2+1);
 
-  dist := DistanceBetween(start, goal);
+  data[start.Y, start.X].ScoreB := Sqr(start.X - goal.X) + Sqr(start.Y - goal.Y);
 
-  current.Point := start;
-  current.Distance := 0;
-  current.Priority := dist;
+  node.Pt := start;
+  node.Weight := data[start.Y, start.X].ScoreB;
+  _Push(queue, node, data, size);
 
-  visited[start.Y, start.X] := True;
-
-  idx := Length(queue);
-  SetLength(queue, idx + 1);
-  queue[idx] := current;
-
-  dist := maxDistanceMultiplier * dist;
   if diagonalTravel then hi := 7 else hi := 3;
 
-  size := 1;
-
-  while size > 0 do
+  while (size > 0) do
   begin
-    current := _Pop();
-    Dec(size);
+    node := _Pop(queue, data, size);
+    p := node.Pt;
 
-    if current.Point = goal then
-    begin
-      totalDist := current.Distance;
-      Exit(_BuildPath());
-    end;
-
-    if current.Distance >= dist then Exit;
+    if p = goal then Exit(_BuildPath(start, goal, data));
 
     for i := 0 to hi do
     begin
-      next.Point := current.Point + OFFSETS[i];
+      q := p + OFFSETS[i];
 
-      if visited[next.Point.Y, next.Point.X] then Continue;
-      if not matrix[next.Point.Y, next.Point.X] then Continue;
+      if not b.Contains(q) then Continue;
+      if not matrix[q.Y, q.X] then Continue;
 
-      if i < 4 then next.Distance := Current.Distance + 1
-      else           next.Distance := Current.Distance + Sqrt(2);
+      score := data[p.Y, p.X].ScoreA + 1;
 
-      next.Priority := next.Distance + DistanceBetween(next.Point, goal);
+      if data[q.Y, q.X].Closed and (score >= data[q.Y, q.X].ScoreA) then
+        Continue;
+      if data[q.Y, q.X].Open and (score >= data[q.Y, q.X].ScoreA) then
+        Continue;
 
-      visited[next.Point.Y, next.Point.X] := True;
-      parents[next.Point.Y, next.Point.X] := current.Point;
+      data[q.Y, q.X].Parent := p;
+      data[q.Y, q.X].ScoreA := score;
+      data[q.Y, q.X].ScoreB := data[q.Y, q.X].ScoreA + Sqr(q.X - goal.X) + Sqr(q.Y - goal.Y);;
 
-      idx := Length(queue);
-      SetLength(queue, idx + 1);
-      queue[idx] := next;
-      Inc(size);
+      if data[q.Y, q.X].Open then Continue;
+
+      paths[q.Y, q.X] := score;
+      //DEBUG_IMG.DrawMatrix(paths);
+      //DEBUG_IMG.Debug();
+
+      node.Pt := q;
+      node.Weight := data[q.Y, q.X].ScoreB;
+      _Push(queue, node, data, size);
     end;
   end;
+end;
 
+function AStarTPA(tpa: TPointArray; start, goal: TPoint; diagonalTravel: Boolean): TPointArray;
+const
+  OFFSETS: array[0..7] of TPoint = ((X:0; Y:-1),(X:-1; Y:0),(X:1; Y:0),(X:0; Y:1),(X:1; Y:-1),(X:-1; Y:1),(X:1; Y:1),(X:-1; Y:-1));
+var
+  b: TBox;
+  queue: TQueue;
+  data: TAStarData;
+  matrix: T2DBoolArray;
+  score, i, hi, size: Int32;
+  node: TNode;
+  q, p: TPoint;
+begin
+  b := GetTPABounds(tpa);
+  if not b.Contains(start) then Exit;
+  if not b.Contains(goal) then Exit;
+  SetLength(matrix, b.Y2+1, b.X2+1);
+
+  for p in tpa do matrix[p.Y, p.X] := True;
+
+  if not matrix[start.Y, start.X] then Exit;
+  if not matrix[goal.Y, goal.X] then Exit;
+
+  SetLength(data, b.Y2+1, b.X2+1);
+
+  data[start.Y, start.X].ScoreB := Sqr(start.X - goal.X) + Sqr(start.Y - goal.Y);
+
+  node.Pt := start;
+  node.Weight := data[start.Y, start.X].ScoreB;
+  _Push(queue, node, data, size);
+
+  if diagonalTravel then hi := 7 else hi := 3;
+
+  while (size > 0) do
+  begin
+    node := _Pop(queue, data, size);
+    p := node.Pt;
+
+    if p = goal then Exit(_BuildPath(start, goal, data));
+
+    for i := 0 to hi do
+    begin
+      q := p + OFFSETS[i];
+
+      if not b.Contains(q) then Continue;
+      if not matrix[q.Y, q.X] then Continue;
+
+      score := data[p.Y, p.X].ScoreA + 1;
+
+      if data[q.Y, q.X].Closed and (score >= data[q.Y, q.X].ScoreA) then
+        Continue;
+      if data[q.Y, q.X].Open and (score >= data[q.Y, q.X].ScoreA) then
+        Continue;
+
+      data[q.Y, q.X].Parent := p;
+      data[q.Y, q.X].ScoreA := score;
+      data[q.Y, q.X].ScoreB := data[q.Y, q.X].ScoreA + Sqr(q.X - goal.X) + Sqr(q.Y - goal.Y);;
+
+      if data[q.Y, q.X].Open then Continue;
+
+      node.Pt := q;
+      node.Weight := data[q.Y, q.X].ScoreB;
+      _Push(queue, node, data, size);
+    end;
+  end;
 end;
 
 
