@@ -3,7 +3,7 @@
   <ProjectSession>
     <PathDelim Value="\"/>
     <Version Value="12"/>
-    <ManyBuildModesSelection Value="WIN64"/>
+    <ManyBuildModesSelection Value="WIN64,WIN32"/>
     <BuildModes Active="WIN32"/>
     <Units>
       <Unit>
@@ -11,8 +11,7 @@
         <IsPartOfProject Value="True"/>
         <TopLine Value="19"/>
         <CursorPos X="122" Y="37"/>
-        <FoldState Value=" T39033 T1A023l"/>
-        <UsageCount Value="37"/>
+        <UsageCount Value="40"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
@@ -20,10 +19,10 @@
         <IsPartOfProject Value="True"/>
         <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
-        <TopLine Value="426"/>
-        <CursorPos X="19" Y="554"/>
-        <FoldState Value=" TL108 T3i00e1 pkXlY0{M6 pj7lQ0J1 PiSj90 T6i102D]F0sS]F1i40a[n4JlW2B]9icjL045]XVja]X0iC2Q4]XgiD6B3 pjKi4A{08]AOkM669]hDlV4 TCj1F3 TMqL211C"/>
-        <UsageCount Value="36"/>
+        <TopLine Value="541"/>
+        <CursorPos X="16" Y="561"/>
+        <FoldState Value=" TL108 T3ig0{{1 pjHka2C5 piclP0L011 PifjU0 T6i102A PSt6]E1i40a]nkJlW2B1[n4jL044]lGm1]X0iC2Q4]XgiD6B3 pjKi4A{08]AOkM66851 Pico42 TCj1F3 TMqL211C"/>
+        <UsageCount Value="39"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
@@ -46,7 +45,7 @@
         <EditorIndex Value="3"/>
         <TopLine Value="97"/>
         <CursorPos X="20" Y="113"/>
-        <UsageCount Value="28"/>
+        <UsageCount Value="29"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
@@ -98,7 +97,7 @@
         <EditorIndex Value="2"/>
         <TopLine Value="176"/>
         <CursorPos X="22" Y="188"/>
-        <UsageCount Value="18"/>
+        <UsageCount Value="19"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
@@ -110,42 +109,6 @@
       </Unit>
     </Units>
     <JumpHistory HistoryIndex="29">
-      <Position>
-        <Filename Value="tpa.pas"/>
-        <Caret Line="391" Column="8" TopLine="338"/>
-      </Position>
-      <Position>
-        <Filename Value="tpa.pas"/>
-        <Caret Line="389" Column="19" TopLine="354"/>
-      </Position>
-      <Position>
-        <Filename Value="tpa.pas"/>
-        <Caret Line="396" Column="16" TopLine="355"/>
-      </Position>
-      <Position>
-        <Filename Value="tpa.pas"/>
-        <Caret Line="401" Column="38" TopLine="387"/>
-      </Position>
-      <Position>
-        <Filename Value="tpa.pas"/>
-        <Caret Line="419" Column="7" TopLine="415"/>
-      </Position>
-      <Position>
-        <Filename Value="tpa.pas"/>
-        <Caret Line="465" Column="22" TopLine="448"/>
-      </Position>
-      <Position>
-        <Filename Value="tpa.pas"/>
-        <Caret Line="418" Column="40" TopLine="355"/>
-      </Position>
-      <Position>
-        <Filename Value="types.pas"/>
-        <Caret Line="22" Column="52" TopLine="14"/>
-      </Position>
-      <Position>
-        <Filename Value="types.pas"/>
-        <Caret Line="50" Column="10" TopLine="24"/>
-      </Position>
       <Position>
         <Filename Value="types.pas"/>
         <Caret Line="51" Column="7" TopLine="33"/>
@@ -229,6 +192,42 @@
       <Position>
         <Filename Value="tpaex.lpr"/>
         <Caret Line="31" Column="6" TopLine="10"/>
+      </Position>
+      <Position>
+        <Filename Value="tpa.pas"/>
+        <Caret Line="464" Column="26" TopLine="426"/>
+      </Position>
+      <Position>
+        <Filename Value="tpa.pas"/>
+        <Caret Line="573" Column="32" TopLine="561"/>
+      </Position>
+      <Position>
+        <Filename Value="tpa.pas"/>
+        <Caret Line="486" Column="31" TopLine="469"/>
+      </Position>
+      <Position>
+        <Filename Value="tpa.pas"/>
+        <Caret Line="482" Column="3" TopLine="471"/>
+      </Position>
+      <Position>
+        <Filename Value="tpa.pas"/>
+        <Caret Line="500" Column="30" TopLine="488"/>
+      </Position>
+      <Position>
+        <Filename Value="tpa.pas"/>
+        <Caret Line="505" Column="21" TopLine="492"/>
+      </Position>
+      <Position>
+        <Filename Value="tpa.pas"/>
+        <Caret Line="595" Column="22" TopLine="578"/>
+      </Position>
+      <Position>
+        <Filename Value="tpa.pas"/>
+        <Caret Line="602" Column="23" TopLine="590"/>
+      </Position>
+      <Position>
+        <Filename Value="tpa.pas"/>
+        <Caret Line="617" Column="59" TopLine="605"/>
       </Position>
     </JumpHistory>
     <RunParams>

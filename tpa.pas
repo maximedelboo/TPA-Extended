@@ -30,7 +30,7 @@ type TAStarData = array of array of TAStarNodeData;
 
 procedure _Push(var queue: TQueue; node: TNode; var data: TAStarData; var size: Int32);
 function _Pop(var queue: TQueue; var data: TAStarData; var size: Int32): TNode;
-function _BuildPath(start, goal: TPoint; data: TAStarData): TPointArray;
+function _BuildPath(start, goal: TPoint; data: TAStarData; offset: TPoint): TPointArray;
 
 function AStarTPAEx(tpa: TPointArray; out paths: T2DFloatArray; start, goal: TPoint; diagonalTravel: Boolean): TPointArray;
 
@@ -445,7 +445,7 @@ begin
   Dec(size);
 end;
 
-function _BuildPath(start, goal: TPoint; data: TAStarData): TPointArray;
+function _BuildPath(start, goal: TPoint; data: TAStarData; offset: TPoint): TPointArray;
 var
   tmp: TPoint;
   len: Int32 = 0;
@@ -456,13 +456,15 @@ begin
   begin
     Inc(len);
     SetLength(Result, len);
-    Result[len-1] := tmp;
+    Result[len-1].X := tmp.X + offset.X;
+    Result[len-1].Y := tmp.Y + offset.Y;
     tmp := data[tmp.Y, tmp.X].Parent;
   end;
 
   Inc(len);
   SetLength(Result, len);
-  Result[len-1] := tmp;
+  Result[len-1].X := tmp.X + offset.X;
+  Result[len-1].Y := tmp.Y + offset.Y;
   TPAReverse(Result);
 end;
 
@@ -477,15 +479,32 @@ var
   matrix: T2DBoolArray;
   score, i, hi, size: Int32;
   node: TNode;
-  q, p: TPoint;
+  tl, q, p: TPoint;
 begin
   b := GetTPABounds(tpa);
   if not b.Contains(start) then Exit;
   if not b.Contains(goal) then Exit;
 
+  tl.X := b.X1;
+  tl.Y := b.Y1;
+  start.X -= tl.X;
+  start.Y -= tl.Y;
+  goal.X -= tl.X;
+  goal.Y -= tl.Y;
+
+  b.X1 := 0;
+  b.Y1 := 0;
+  b.X2 -= tl.X;
+  b.Y2 -= tl.Y;
+
   SetLength(matrix, b.Y2+1, b.X2+1);
 
-  for p in tpa do matrix[p.Y, p.X] := True;
+  for i := 0 to High(tpa) do
+  begin
+    tpa[i].X -= tl.X;
+    tpa[i].Y -= tl.Y;
+    matrix[tpa[i].Y, tpa[i].X] := True;
+  end;
 
   if not matrix[start.Y, start.X] then Exit;
   if not matrix[goal.Y, goal.X] then Exit;
@@ -507,7 +526,7 @@ begin
     node := _Pop(queue, data, size);
     p := node.Pt;
 
-    if p = goal then Exit(_BuildPath(start, goal, data));
+    if p = goal then Exit(_BuildPath(start, goal, data, tl));
 
     for i := 0 to hi do
     begin
@@ -538,6 +557,8 @@ begin
       _Push(queue, node, data, size);
     end;
   end;
+
+  Result := [];
 end;
 
 function AStarTPA(tpa: TPointArray; start, goal: TPoint; diagonalTravel: Boolean): TPointArray;
@@ -550,19 +571,37 @@ var
   matrix: T2DBoolArray;
   score, i, hi, size: Int32;
   node: TNode;
-  q, p: TPoint;
+  tl, q, p: TPoint;
 begin
   b := GetTPABounds(tpa);
   if not b.Contains(start) then Exit;
   if not b.Contains(goal) then Exit;
+
+  tl.X := b.X1;
+  tl.Y := b.Y1;
+  start.X -= tl.X;
+  start.Y -= tl.Y;
+  goal.X -= tl.X;
+  goal.Y -= tl.Y;
+
+  b.X1 := 0;
+  b.Y1 := 0;
+  b.X2 -= tl.X;
+  b.Y2 -= tl.Y;
+
   SetLength(matrix, b.Y2+1, b.X2+1);
 
-  for p in tpa do matrix[p.Y, p.X] := True;
+  for i := 0 to High(tpa) do
+  begin
+    tpa[i].X -= tl.X;
+    tpa[i].Y -= tl.Y;
+    matrix[tpa[i].Y, tpa[i].X] := True;
+  end;
 
   if not matrix[start.Y, start.X] then Exit;
   if not matrix[goal.Y, goal.X] then Exit;
 
-  SetLength(data, b.Y2+1, b.X2+1);
+  SetLength(data, b.Y2 + 1, b.X2 + 1);
 
   data[start.Y, start.X].ScoreB := Sqr(start.X - goal.X) + Sqr(start.Y - goal.Y);
 
@@ -577,7 +616,7 @@ begin
     node := _Pop(queue, data, size);
     p := node.Pt;
 
-    if p = goal then Exit(_BuildPath(start, goal, data));
+    if p = goal then Exit(_BuildPath(start, goal, data, tl));
 
     for i := 0 to hi do
     begin
@@ -604,8 +643,9 @@ begin
       _Push(queue, node, data, size);
     end;
   end;
-end;
 
+  Result := [];
+end;
 
 end.
 
