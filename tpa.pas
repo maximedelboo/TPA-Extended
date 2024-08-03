@@ -479,38 +479,33 @@ var
   matrix: T2DBoolArray;
   score, i, hi, size: Int32;
   node: TNode;
-  tl, q, p: TPoint;
+  offset, q, p: TPoint;
 begin
   b := GetTPABounds(tpa);
   if not b.Contains(start) then Exit;
   if not b.Contains(goal) then Exit;
 
-  tl.X := b.X1;
-  tl.Y := b.Y1;
-  start.X -= tl.X;
-  start.Y -= tl.Y;
-  goal.X -= tl.X;
-  goal.Y -= tl.Y;
+  offset.X := b.X1;
+  offset.Y := b.Y1;
+  start.X -= offset.X;
+  start.Y -= offset.Y;
+  goal.X -= offset.X;
+  goal.Y -= offset.Y;
 
   b.X1 := 0;
   b.Y1 := 0;
-  b.X2 -= tl.X;
-  b.Y2 -= tl.Y;
+  b.X2 -= offset.X;
+  b.Y2 -= offset.Y;
 
   SetLength(matrix, b.Y2+1, b.X2+1);
-
-  for i := 0 to High(tpa) do
-  begin
-    tpa[i].X -= tl.X;
-    tpa[i].Y -= tl.Y;
-    matrix[tpa[i].Y, tpa[i].X] := True;
-  end;
+  for p in tpa do
+    matrix[p.Y - offset.Y, p.X - offset.X] := True;
 
   if not matrix[start.Y, start.X] then Exit;
   if not matrix[goal.Y, goal.X] then Exit;
 
-  paths := [];
-  SetLength(paths, b.Y2+1, b.X2+1);
+  SetLength(paths, 0);
+  SetLength(paths, offset.Y + b.Y2+1, offset.X + b.X2+1);
   SetLength(data, b.Y2+1, b.X2+1);
 
   data[start.Y, start.X].ScoreB := Sqr(start.X - goal.X) + Sqr(start.Y - goal.Y);
@@ -526,7 +521,7 @@ begin
     node := _Pop(queue, data, size);
     p := node.Pt;
 
-    if p = goal then Exit(_BuildPath(start, goal, data, tl));
+    if p = goal then Exit(_BuildPath(start, goal, data, offset));
 
     for i := 0 to hi do
     begin
@@ -548,15 +543,14 @@ begin
 
       if data[q.Y, q.X].Open then Continue;
 
-      paths[q.Y, q.X] := score;
-      //DEBUG_IMG.DrawMatrix(paths);
-      //DEBUG_IMG.Debug();
+      paths[q.Y + offset.Y, q.X + offset.X] := score;
 
       node.Pt := q;
       node.Weight := data[q.Y, q.X].ScoreB;
       _Push(queue, node, data, size);
     end;
   end;
+
 
   Result := [];
 end;
@@ -571,32 +565,27 @@ var
   matrix: T2DBoolArray;
   score, i, hi, size: Int32;
   node: TNode;
-  tl, q, p: TPoint;
+  offset, q, p: TPoint;
 begin
   b := GetTPABounds(tpa);
   if not b.Contains(start) then Exit;
   if not b.Contains(goal) then Exit;
 
-  tl.X := b.X1;
-  tl.Y := b.Y1;
-  start.X -= tl.X;
-  start.Y -= tl.Y;
-  goal.X -= tl.X;
-  goal.Y -= tl.Y;
+  offset.X := b.X1;
+  offset.Y := b.Y1;
+  start.X -= offset.X;
+  start.Y -= offset.Y;
+  goal.X -= offset.X;
+  goal.Y -= offset.Y;
 
   b.X1 := 0;
   b.Y1 := 0;
-  b.X2 -= tl.X;
-  b.Y2 -= tl.Y;
+  b.X2 -= offset.X;
+  b.Y2 -= offset.Y;
 
   SetLength(matrix, b.Y2+1, b.X2+1);
-
-  for i := 0 to High(tpa) do
-  begin
-    tpa[i].X -= tl.X;
-    tpa[i].Y -= tl.Y;
-    matrix[tpa[i].Y, tpa[i].X] := True;
-  end;
+  for p in tpa do
+    matrix[p.Y - offset.Y, p.X - offset.X] := True;
 
   if not matrix[start.Y, start.X] then Exit;
   if not matrix[goal.Y, goal.X] then Exit;
@@ -616,7 +605,7 @@ begin
     node := _Pop(queue, data, size);
     p := node.Pt;
 
-    if p = goal then Exit(_BuildPath(start, goal, data, tl));
+    if p = goal then Exit(_BuildPath(start, goal, data, offset));
 
     for i := 0 to hi do
     begin
