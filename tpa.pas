@@ -7,6 +7,7 @@ unit tpa;
   Links:
    - https://github.com/Torwent/Simba/blob/simba1400/Source/MML/simba.tpa.pas
    - https://github.com/Villavu/Simba/blob/simba2000/Source/simba.vartype_pointarray.pas
+   - https://pastebin.com/8hxwnptq
 [==============================================================================}
 {$mode objfpc}{$H+}
 
@@ -14,8 +15,8 @@ interface
 
 uses sysutils, types;
 
-function NRSplitTPA(const arr: TPointArray; dist: Double): T2DPointArray;
-function NRClusterTPA(const tpa: TPointArray; dist: Double): T2DPointArray;
+function NRSplitTPA(const pts: TPointArray;  w,h: Single): T2DPointArray;
+function NRClusterTPA(const tpa: TPointArray; dist: Single): T2DPointArray;
 function SkeletonTPA(tpa: TPointArray; fMin, fMax: Int32): TPointArray;
 function TPAMatrix(tpa: TPointArray): T2DBoolArray;
 
@@ -41,49 +42,54 @@ implementation
 uses Math;
 
 
-function NRSplitTPA(const arr: TPointArray; dist: Double): T2DPointArray;
+function NRSplitTPA(const pts: TPointArray; w,h: Single): T2DPointArray;
 var
-  t1, t2, c, ec, tc, l: Integer;
-  tpa: TPointArray;
-begin
-  tpa := Copy(arr);
-  l := High(tpa);
-  if (l < 0) then Exit;
-  SetLength(Result, l + 1);
-  c := 0;
-  ec := 0;
-  while ((l - ec) >= 0) do
+  bak: TPoint;
+  lo,hi: Int32;
+  sqx,sqy,sqxy: single;
+  procedure ConnectCluster(p: TPoint);
+  var i,top: Int32;
   begin
-    SetLength(Result[c], 1);
-    Result[c][0] := tpa[0];
-    tpa[0] := tpa[l - ec];
-    Inc(ec);
-    tc := 1;
-    t1 := 0;
-    while (t1 < tc) do
-    begin
-      t2 := 0;
-      while (t2 <= (l - ec)) do
+    top := hi;
+    for i:=hi downto lo+1 do
+      //if (Abs(p.x-pts[i].x) <= w) and (Abs(p.y-pts[i].y) <= h) then
+      if (Sqr(p.x-pts[i].x)*sqy)+(Sqr(p.y-pts[i].y)*sqx) <= sqxy then
       begin
-        if (sqrt(Sqr(Result[c][t1].x - tpa[t2].x) + Sqr(Result[c][t1].y - tpa[t2].y)) <= dist) then
-        begin
-          SetLength(Result[c], tc +1);
-          Result[c][tc] := tpa[t2];
-          tpa[t2] := tpa[l - ec];
-          Inc(ec);
-          Inc(tc);
-          Dec(t2);
-        end;
-        Inc(t2);
+        bak := pts[i];
+        pts[i] := pts[hi];
+        pts[hi] := bak;
+        Dec(hi);               // reduce upper bound
       end;
-      Inc(t1);
-    end;
-    Inc(c);
+
+    for i:=hi+1 to top do
+      ConnectCluster(pts[i]);
   end;
-  SetLength(Result, c);
+
+var top,n: Int32;
+begin
+  sqx := Sqr(w);
+  sqy := Sqr(h);
+  sqxy := sqx*sqy;
+
+  lo := 0;
+  hi := High(pts);
+  while lo <= hi do
+  begin
+    top := hi;
+    ConnectCluster(pts[lo]);
+
+    // add the connected range
+    n := Length(Result);
+    SetLength(Result, n+1);
+    Result[n] := Copy(pts, hi+1, (top-hi));
+    SetLength(Result[n], Length(Result[n]) + 1);
+    Result[n][High(Result[n])] := pts[lo];
+
+    Inc(lo); // increase lower bound
+  end;
 end;
 
-function NRClusterTPA(const tpa: TPointArray; dist: Double): T2DPointArray;
+function NRClusterTPA(const tpa: TPointArray; dist: Single): T2DPointArray;
 type
   TPointScan = record
     skipRow: Boolean;
