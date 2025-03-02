@@ -41,7 +41,7 @@ begin
   addGlobalFunc('function NRSplitTPA(const arr: TPointArray; w, h: Single): T2DPointArray; native;', @Lape_NRSplitTPA);
   addGlobalFunc('function NRClusterTPA(const TPA: TPointArray; dist: Single): T2DPointArray; native;', @Lape_NRClusterTPA);
   addGlobalFunc('function SkeletonTPA(tpa: TPointArray; fMin, fMax: Int32): TPointArray; native;', @Lape_SkeletonTPA);
-  addGlobalFunc('function TPAMatrix(tpa: TPointArray): T2DBoolArray; native;', @Lape_TPAMatrix);
+  addGlobalFunc('function TPAMatrix(tpa: TPointArray): TBooleanMatrix; native;', @Lape_TPAMatrix);
   addGlobalFunc('function AStarTPAEx(tpa: TPointArray; out paths: TSingleMatrix; start, goal: TPoint; diagonalTravel: Boolean): TPointArray; native;', @Lape_AStarTPAEx);
   addGlobalFunc('function AStarTPA(tpa: TPointArray; start, goal: TPoint; diagonalTravel: Boolean): TPointArray; native;', @Lape_AStarTPA);
 end.
