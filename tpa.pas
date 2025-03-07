@@ -37,6 +37,10 @@ function AStarTPAEx(tpa: TPointArray; out paths: T2DFloatArray; start, goal: TPo
 
 function AStarTPA(tpa: TPointArray; start, goal: TPoint; diagonalTravel: Boolean): TPointArray; overload;
 
+procedure _GetBoundingBox(const tpa: TPointArray; out MinX, MinY, MaxX, MaxY: Integer);
+procedure _FloodFill(const grid: T2DBoolArray; var visited: T2DBoolArray; OffX, OffY, startX, startY: Integer; var cluster: TPointArray);
+function FloodFillTPA(const tpa: TPointArray): T2DPointArray;
+
 implementation
 
 uses Math;
@@ -640,6 +644,154 @@ begin
   end;
 
   Result := [];
+end;
+
+
+procedure _GetBoundingBox(const tpa: TPointArray; out MinX, MinY, MaxX, MaxY: Integer);
+var
+  i: Integer;
+begin
+  if Length(tpa) = 0 then
+    raise Exception.Create('Empty point array');
+  MinX := tpa[0].X;
+  MaxX := tpa[0].X;
+  MinY := tpa[0].Y;
+  MaxY := tpa[0].Y;
+  for i := 1 to High(tpa) do
+  begin
+    if tpa[i].X < MinX then MinX := tpa[i].X;
+    if tpa[i].X > MaxX then MaxX := tpa[i].X;
+    if tpa[i].Y < MinY then MinY := tpa[i].Y;
+    if tpa[i].Y > MaxY then MaxY := tpa[i].Y;
+  end;
+end;
+
+procedure _FloodFill(const grid: T2DBoolArray; var visited: T2DBoolArray; OffX, OffY, startX, startY: Integer; var cluster: TPointArray);
+var
+  // Queue for BFS.
+  queue: array of TPoint;
+  front, rear: Integer;
+  cur, neighbor: TPoint;
+  dx, dy: Integer;
+  nx, ny: Integer;
+  // 4-connected neighbor offsets.
+  Neighbors: array[0..3] of TPoint = (
+    (X: 0; Y: -1),  // Up
+    (X: 0; Y: 1),   // Down
+    (X: -1; Y: 0),  // Left
+    (X: 1; Y: 0)    // Right
+  );
+  i: Integer;
+  width, height: Integer;
+begin
+  width := Length(grid);
+  if width = 0 then Exit;
+  height := Length(grid[0]);
+
+  SetLength(queue, width * height);
+  front := 0;
+  rear := 0;
+
+  // Start from the given cell.
+  queue[rear].X := startX;
+  queue[rear].Y := startY;
+  Inc(rear);
+  visited[startX][startY] := True;
+  // Add the corresponding point (convert grid indices back to real coordinates)
+  SetLength(cluster, Length(cluster) + 1);
+  cluster[High(cluster)].X := startX + OffX;
+  cluster[High(cluster)].Y := startY + OffY;
+
+  // Process queue
+  while front < rear do
+  begin
+    cur := queue[front];
+    Inc(front);
+
+    // Check neighbors
+    for i := Low(Neighbors) to High(Neighbors) do
+    begin
+      dx := Neighbors[i].X;
+      dy := Neighbors[i].Y;
+      nx := cur.X + dx;
+      ny := cur.Y + dy;
+
+      // Check bounds.
+      if (nx >= 0) and (nx < width) and (ny >= 0) and (ny < height) then
+      begin
+        // If the neighbor is occupied and not visited
+        if (grid[nx][ny]) and (not visited[nx][ny]) then
+        begin
+          visited[nx][ny] := True;
+          // Enqueue
+          queue[rear].X := nx;
+          queue[rear].Y := ny;
+          Inc(rear);
+          // Add to cluster (convert back to original coordinates)
+          SetLength(cluster, Length(cluster) + 1);
+          cluster[High(cluster)].X := nx + OffX;
+          cluster[High(cluster)].Y := ny + OffY;
+        end;
+      end;
+    end;
+  end;
+end;
+
+function FloodFillTPA(const tpa: TPointArray): T2DPointArray;
+var
+  MinX, MinY, MaxX, MaxY: Integer;
+  width, height: Integer;
+  grid, visited: T2DBoolArray;
+  i, j: Integer;
+  pt: TPoint;
+  cluster: TPointArray;
+  clusters: T2DPointArray;
+begin
+  // Determine bounding box
+  _GetBoundingBox(tpa, MinX, MinY, MaxX, MaxY);
+  width := MaxX - MinX + 1;
+  height := MaxY - MinY + 1;
+
+  // Initialize the occupancy grid.
+  SetLength(grid, width);
+  SetLength(visited, width);
+  for i := 0 to width - 1 do
+  begin
+    SetLength(grid[i], height);
+    SetLength(visited[i], height);
+    FillChar(grid[i][0], height * SizeOf(Boolean), 0);
+    FillChar(visited[i][0], height * SizeOf(Boolean), 0);
+  end;
+
+  // Mark cells that contain a point.
+  for i := 0 to High(tpa) do
+  begin
+    pt := tpa[i];
+    grid[pt.X - MinX][pt.Y - MinY] := True;
+  end;
+
+  clusters := nil;
+
+  // Iterate over the grid and flood fill clusters.
+  for i := 0 to width - 1 do
+    for j := 0 to height - 1 do
+    begin
+      pt.Y := j;
+      if grid[i][pt.Y] and (not visited[i][pt.Y]) then
+      begin
+        // Start a new cluster
+        cluster := nil;
+        _FloodFill(grid, visited, MinX, MinY, i, pt.Y, cluster);
+        // Append cluster to clusters if non-empty.
+        if Length(cluster) > 0 then
+        begin
+          SetLength(clusters, Length(clusters) + 1);
+          clusters[High(clusters)] := cluster;
+        end;
+      end;
+    end;
+
+  Result := clusters;
 end;
 
 end.
