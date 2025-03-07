@@ -747,12 +747,10 @@ var
   cluster: TPointArray;
   clusters: T2DPointArray;
 begin
-  // Determine bounding box
   _GetBoundingBox(tpa, MinX, MinY, MaxX, MaxY);
   width := MaxX - MinX + 1;
   height := MaxY - MinY + 1;
 
-  // Initialize the occupancy grid.
   SetLength(grid, width);
   SetLength(visited, width);
   for i := 0 to width - 1 do
@@ -763,7 +761,6 @@ begin
     FillChar(visited[i][0], height * SizeOf(Boolean), 0);
   end;
 
-  // Mark cells that contain a point.
   for i := 0 to High(tpa) do
   begin
     pt := tpa[i];
@@ -772,7 +769,6 @@ begin
 
   clusters := nil;
 
-  // Iterate over the grid and flood fill clusters.
   for i := 0 to width - 1 do
     for j := 0 to height - 1 do
     begin
